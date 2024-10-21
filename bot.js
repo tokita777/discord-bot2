@@ -6,7 +6,7 @@ app.get('/', (req, res) => res.send('Bot is running'));
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
-});lp
+});
 require('dotenv').config();
 const { Client, GatewayIntentBits, Events, Collection, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const fs = require('fs');
