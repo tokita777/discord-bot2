@@ -1,3 +1,12 @@
+const express = require('express');
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get('/', (req, res) => res.send('Bot is running'));
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});lp
 require('dotenv').config();
 const { Client, GatewayIntentBits, Events, Collection, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const fs = require('fs');
@@ -15,8 +24,6 @@ const client = new Client({
 // Configurações
 const prefix = '+!';
 client.commands = new Collection();
-
-const PORT = process.env.PORT || 3000; // Ignorar a porta se não estiver sendo usada
 
 // Carregar comandos da pasta "commands"
 const commandFiles = fs.readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith('.js'));
