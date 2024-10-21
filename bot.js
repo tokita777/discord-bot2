@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, Events, Collection } = require('discord.js');
+const { Client, GatewayIntentBits, Events, Collection, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
@@ -13,11 +13,12 @@ const client = new Client({
 });
 
 // Configurações
-const prefix = '+!'; 
+const prefix = '+!';
 client.commands = new Collection();
 
-// Carregar comandos
+// Carregar comandos da pasta "commands"
 const commandFiles = fs.readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith('.js'));
+
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
     client.commands.set(command.name, command);
@@ -26,38 +27,96 @@ for (const file of commandFiles) {
 // Evento de início
 client.once(Events.ClientReady, () => {
     console.log('Bot online!');
+
+    // Configura o status "Sobre mim"
     client.user.setActivity('Brazil Zil Zil', { type: 'WATCHING' });
+    
+    // Define o "Sobre mim" no perfil do bot
+    client.user.setPresence({
+        activities: [{ name: 'criado por um cara muito foda!', type: 'PLAYING' }],
+        status: 'online', // Define o status do bot
+    });
 });
 
-// Função para verificar comandos
-const isCommand = (message) => message.content.startsWith(prefix);
+// Função para remover acentos
+const normalizeCommand = (command) => {
+    return command.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+};
 
-// Evento de mensagem
+// Função para verificar se a mensagem é um comando
+const isCommand = (message) => {
+    return message.content.startsWith(prefix);
+};
+
+// Função para corrigir o comando, permitindo variações como "abracar" para "abraçar"
+const getCorrectCommand = (commandName) => {
+    const normalizedCommandName = normalizeCommand(commandName);
+    const commandNames = Array.from(client.commands.keys()).map(normalizeCommand);
+    
+    const matches = commandNames.filter(name => name.startsWith(normalizedCommandName) || name.includes(normalizedCommandName));
+    return matches.length > 0 ? matches[0] : null; // Retorna o primeiro comando que corresponder ou null
+};
+
+// Evento quando uma nova mensagem é criada
 client.on(Events.MessageCreate, async (message) => {
-    if (message.author.bot) return;
+    if (message.author.bot) return; // Ignora mensagens de outros bots
 
-    // Responder quando mencionado
-    if (message.mentions.has(client.user)) {
-        await message.channel.send(`Olá, ${message.author.username}! Como posso ajudar? meu prefixo padrao é +!`);
-    }
-
+    // Ignorar mensagens que não começam com o prefixo
     if (!isCommand(message)) return;
 
     const args = message.content.slice(prefix.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
-    const command = client.commands.get(commandName);
 
-    if (command) {
+    // Verificar se o comando existe ou corrigir o comando
+    const correctCommandName = getCorrectCommand(commandName);
+
+    if (correctCommandName) {
+        const command = client.commands.get(correctCommandName);
         try {
-            await command.execute(message, args);
+            await command.execute(message, args); // Executa o comando
         } catch (error) {
             console.error(error);
-            message.channel.send('Ocorreu um erro ao executar o comando! Por favor, tente novamente.');
+            message.channel.send('Ocorreu um erro ao executar o comando!');
         }
     } else {
-        message.channel.send(`Desculpe, não entendi o comando. Use \`${prefix}help\` para ver a lista de comandos.`);
+        message.channel.send(`Desculpe, não entendi o comando. Você quis dizer "${prefix}${correctCommandName}"?`);
     }
 });
 
-// Login do bot
+// Exemplo de comando com botões interativos
+client.on(Events.MessageCreate, async (message) => {
+    if (message.content === `${prefix}interagir`) {
+        // Cria uma linha de botões
+        const row = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('like')
+                    .setLabel('👍 Curtir')
+                    .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId('dislike')
+                    .setLabel('👎 Não curtir')
+                    .setStyle(ButtonStyle.Danger)
+            );
+
+        // Envia a mensagem com os botões
+        await message.channel.send({
+            content: 'Você quer curtir ou não curtir?',
+            components: [row],
+        });
+    }
+});
+
+// Resposta ao botão clicado
+client.on(Events.InteractionCreate, async interaction => {
+    if (!interaction.isButton()) return;
+
+    if (interaction.customId === 'like') {
+        await interaction.reply('Você curtiu!');
+    } else if (interaction.customId === 'dislike') {
+        await interaction.reply('Você não curtiu.');
+    }
+});
+
+// Login do bot usando o token do .env
 client.login(process.env.TOKEN);
