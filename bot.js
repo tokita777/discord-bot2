@@ -70,12 +70,11 @@ const getCorrectCommand = (commandName) => {
 client.on(Events.MessageCreate, async (message) => {
     if (message.author.bot) return; // Ignora mensagens de outros bots
 
-// Responder quando mencionado
-client.on(Events.MessageCreate, async (message) => {
+    // Responder quando mencionado
     if (message.mentions.has(client.user)) {
-        await message.channel.send(`Olá, ${message.author.username}! Como posso ajudar? meu prefixo padrao é +!`);
+        await message.channel.send(`Olá, ${message.author.username}! Como posso ajudar?`);
+        return; // Adiciona return para evitar a execução do restante do código
     }
-});
 
     // Ignorar mensagens que não começam com o prefixo
     if (!isCommand(message)) return;
@@ -89,7 +88,7 @@ client.on(Events.MessageCreate, async (message) => {
     if (correctCommandName) {
         const command = client.commands.get(correctCommandName);
         try {
-            await command.execute(message, args); // Executa o comando
+            await command.execute(message, args);
         } catch (error) {
             console.error(error);
             message.channel.send('Ocorreu um erro ao executar o comando!');
