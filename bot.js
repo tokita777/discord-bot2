@@ -16,6 +16,8 @@ const client = new Client({
 const prefix = '+!';
 client.commands = new Collection();
 
+const PORT = process.env.PORT || 3000; // Ignorar a porta se não estiver sendo usada
+
 // Carregar comandos da pasta "commands"
 const commandFiles = fs.readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith('.js'));
 
