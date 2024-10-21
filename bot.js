@@ -63,6 +63,13 @@ const getCorrectCommand = (commandName) => {
 client.on(Events.MessageCreate, async (message) => {
     if (message.author.bot) return; // Ignora mensagens de outros bots
 
+// Responder quando mencionado
+client.on(Events.MessageCreate, async (message) => {
+    if (message.mentions.has(client.user)) {
+        await message.channel.send(`Olá, ${message.author.username}! Como posso ajudar? meu prefixo padrao é +!`);
+    }
+});
+
     // Ignorar mensagens que não começam com o prefixo
     if (!isCommand(message)) return;
 
