@@ -72,7 +72,7 @@ client.on(Events.MessageCreate, async (message) => {
 
     // Responder quando mencionado
     if (message.mentions.has(client.user)) {
-        await message.channel.send(`Olá, ${message.author.username}! Como posso ajudar?`);
+        await message.channel.send(`Olá, ${message.author.username}! Como posso ajudar? meu prefixo padrao é +!`);
         return; // Adiciona return para evitar a execução do restante do código
     }
 
