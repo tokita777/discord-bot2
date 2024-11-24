@@ -3,33 +3,37 @@ const axios = require('axios');
 
 module.exports = {
     name: 'letra',
-    description: 'Busca a letra de uma música',
+    description: 'Busca a letra de uma música usando Genius API',
     async execute(message, args) {
-        if (args.length < 2) {
-            return message.reply('Por favor, informe o nome do artista e da música.');
+        if (args.length < 1) {
+            return message.reply('Por favor, informe o nome da música.');
         }
 
-        const artist = args[0];
-        const song = args.slice(1).join(' ');
+        const query = args.join(' ');
 
         try {
-            const response = await axios.get(`https://lyricsovh.vercel.app/v1/${artist}/${song}`);
-            const lyrics = response.data.lyrics;
+            const response = await axios.get(`https://api.genius.com/search?q=${encodeURIComponent(query)}`, {
+                headers: {
+                    Authorization: `Bearer ${process.env.GENIUS_TOKEN}`
+                }
+            });
 
-            if (!lyrics) {
-                return message.reply('Desculpe, não encontramos a letra dessa música.');
+            if (response.data.response.hits.length === 0) {
+                return message.reply('Não encontrei resultados para essa música.');
             }
 
+            const song = response.data.response.hits[0].result;
             const embed = new EmbedBuilder()
-                .setColor('#1DB954')
-                .setTitle(`Letra da música: ${song}`)
-                .setDescription(lyrics.length > 4096 ? lyrics.slice(0, 4093) + '...' : lyrics)
-                .setFooter({ text: `Solicitado por ${message.author.tag}` });
+                .setColor('#ffce00')
+                .setTitle(song.full_title)
+                .setURL(song.url)
+                .setThumbnail(song.song_art_image_thumbnail_url)
+                .setDescription('Clique no título para ver a letra completa no Genius!');
 
             message.channel.send({ embeds: [embed] });
         } catch (error) {
             console.error(error);
-            message.reply('Ocorreu um erro ao buscar a letra.');
+            message.reply('Ocorreu um erro ao buscar a música.');
         }
     },
 };
