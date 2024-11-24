@@ -6,30 +6,30 @@ module.exports = {
     description: 'Busca a letra de uma música',
     async execute(message, args) {
         if (args.length < 2) {
-            return message.reply('Por favor, informe o nome do artista e da música. Exemplo: `!letra Imagine John Lennon`');
+            return message.reply('Por favor, informe o nome do artista e da música.');
         }
 
         const artist = args[0];
         const song = args.slice(1).join(' ');
 
         try {
-            const response = await axios.get(`https://api.lyrics.ovh/v1/${artist}/${song}`);
+            const response = await axios.get(`https://lyricsovh.vercel.app/v1/${artist}/${song}`);
             const lyrics = response.data.lyrics;
 
             if (!lyrics) {
-                return message.reply('Desculpe, não encontrei a letra dessa música.');
+                return message.reply('Desculpe, não encontramos a letra dessa música.');
             }
 
             const embed = new EmbedBuilder()
                 .setColor('#1DB954')
                 .setTitle(`Letra da música: ${song}`)
                 .setDescription(lyrics.length > 4096 ? lyrics.slice(0, 4093) + '...' : lyrics)
-                .setFooter({ text: `Solicitado por ${message.author.username}`, iconURL: message.author.displayAvatarURL() });
+                .setFooter({ text: `Solicitado por ${message.author.tag}` });
 
             message.channel.send({ embeds: [embed] });
         } catch (error) {
             console.error(error);
-            message.reply('Ocorreu um erro ao buscar a letra. Verifique o nome da música e do artista.');
+            message.reply('Ocorreu um erro ao buscar a letra.');
         }
     },
 };
