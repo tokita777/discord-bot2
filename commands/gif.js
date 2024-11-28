@@ -11,8 +11,9 @@ module.exports = {
         }
 
         try {
-            const response = await axios.get('https://nekos.life/api/v2/img/neko'); // Aqui estamos usando um exemplo com 'neko'
-            const gifUrl = response.data.url; // URL da imagem
+            const apiKey = '1721NHekIOelajzLQATtc4Tdqgqsl2pM';  // Substitua com sua chave da Giphy
+            const response = await axios.get(`https://api.giphy.com/v1/gifs/search?q=${encodeURIComponent(searchTerm)}&api_key=${apiKey}&limit=1`);
+            const gifUrl = response.data.data[0].images.original.url;
 
             const embed = new EmbedBuilder()
                 .setColor('#00FF00')
