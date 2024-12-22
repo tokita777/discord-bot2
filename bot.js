@@ -1,16 +1,13 @@
-const express = require('express');
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.get('/', (req, res) => res.send('Bot is running'));
-
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
 require('dotenv').config();
-const { Client, GatewayIntentBits, Events, Collection, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const express = require('express');
+const { Client, GatewayIntentBits, Events, Collection } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+app.get('/', (req, res) => res.send('Bot is running'));
+app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
 
 // Criação do cliente
 const client = new Client({
@@ -27,7 +24,6 @@ client.commands = new Collection();
 
 // Carregar comandos da pasta "commands"
 const commandFiles = fs.readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith('.js'));
-
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
     client.commands.set(command.name, command);
@@ -36,53 +32,40 @@ for (const file of commandFiles) {
 // Evento de início
 client.once(Events.ClientReady, () => {
     console.log('Bot online!');
-
-    // Configura o status "Sobre mim"
     client.user.setActivity('Brazil Zil Zil', { type: 'WATCHING' });
-    
-    // Define o "Sobre mim" no perfil do bot
     client.user.setPresence({
         activities: [{ name: 'criado por um cara muito foda!', type: 'PLAYING' }],
-        status: 'online', // Define o status do bot
+        status: 'online',
     });
 });
 
-// Função para remover acentos
+// Funções auxiliares
 const normalizeCommand = (command) => {
+    if (!command) return '';
     return command.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 };
 
-// Função para verificar se a mensagem é um comando
-const isCommand = (message) => {
-    return message.content.startsWith(prefix);
-};
+const isCommand = (message) => message.content.startsWith(prefix);
 
-// Função para corrigir o comando, permitindo variações como "abracar" para "abraçar"
 const getCorrectCommand = (commandName) => {
     const normalizedCommandName = normalizeCommand(commandName);
     const commandNames = Array.from(client.commands.keys()).map(normalizeCommand);
-    
     const matches = commandNames.filter(name => name.startsWith(normalizedCommandName) || name.includes(normalizedCommandName));
-    return matches.length > 0 ? matches[0] : null; // Retorna o primeiro comando que corresponder ou null
+    return matches.length > 0 ? matches[0] : null;
 };
 
-// Evento quando uma nova mensagem é criada
+// Evento MessageCreate
 client.on(Events.MessageCreate, async (message) => {
-    if (message.author.bot) return; // Ignora mensagens de outros bots
+    if (message.author.bot) return;
 
-    // Responder quando mencionado
     if (message.mentions.has(client.user)) {
-        await message.channel.send(`Olá, ${message.author.username}! Como posso ajudar? meu prefixo padrao é +!`);
-        return; // Adiciona return para evitar a execução do restante do código
+        return await message.channel.send(`Olá, ${message.author.username}! Como posso ajudar? meu prefixo padrao é +!`);
     }
 
-    // Ignorar mensagens que não começam com o prefixo
     if (!isCommand(message)) return;
 
     const args = message.content.slice(prefix.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
-
-    // Verificar se o comando existe ou corrigir o comando
     const correctCommandName = getCorrectCommand(commandName);
 
     if (correctCommandName) {
@@ -94,44 +77,9 @@ client.on(Events.MessageCreate, async (message) => {
             message.channel.send('Ocorreu um erro ao executar o comando!');
         }
     } else {
-        message.channel.send(`Desculpe, não entendi o comando. Você quis dizer "${prefix}${correctCommandName}"?`);
+        message.channel.send('Desculpe, não entendi o comando.');
     }
 });
 
-// Exemplo de comando com botões interativos
-client.on(Events.MessageCreate, async (message) => {
-    if (message.content === `${prefix}interagir`) {
-        // Cria uma linha de botões
-        const row = new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId('like')
-                    .setLabel('👍 Curtir')
-                    .setStyle(ButtonStyle.Primary),
-                new ButtonBuilder()
-                    .setCustomId('dislike')
-                    .setLabel('👎 Não curtir')
-                    .setStyle(ButtonStyle.Danger)
-            );
-
-        // Envia a mensagem com os botões
-        await message.channel.send({
-            content: 'Você quer curtir ou não curtir?',
-            components: [row],
-        });
-    }
-});
-
-// Resposta ao botão clicado
-client.on(Events.InteractionCreate, async interaction => {
-    if (!interaction.isButton()) return;
-
-    if (interaction.customId === 'like') {
-        await interaction.reply('Você curtiu!');
-    } else if (interaction.customId === 'dislike') {
-        await interaction.reply('Você não curtiu.');
-    }
-});
-
-// Login do bot usando o token do .env
+// Login do bot
 client.login(process.env.TOKEN);
